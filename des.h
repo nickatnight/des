@@ -25,8 +25,8 @@ class Des {
         static uint32_t rotl(uint32_t, int32_t);
         static ull initial_permutation();
         static void test_function();
-        static void function_block(ull, ull, ull);
-        static ull expand(ull);
+        static void function_block(ull *, ull *, ull);
+        static ull expand(ull *);
 
     private:
         static ull key, pc1;
@@ -37,6 +37,6 @@ class Des {
         static int e_key[];
         static uint32_t c[17], d[17];
         static ull keys[16];
-        static void assert(ull cd, int i);
+        static int sbox[8][4][16];
 
 };
