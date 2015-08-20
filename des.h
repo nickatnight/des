@@ -17,6 +17,7 @@ class Des {
         void run(string s = "");
         static void read_store_file(string);
         static bool check_if_file_exists(string);
+        static ull permutation(ull);
         static void permutation1();
         static ull permutation2(ull);
         static void generate_keys();

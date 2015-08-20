@@ -196,11 +196,46 @@ bool Des::check_if_file_exists(string s) {
 //        Key value for n
 void Des::function_block(ull *li, ull *ri, ull ki) {
 
-    ull expansion = 0;
+    ull expansion = 0, sbox_in = 0, sbox_out = 0, f_out;
     expansion = expand(ri);
+    int row, col;
 
+    ull iso_bits, shifter=0x0000fc0000000000;
 
+    // XOR function using the expansion output and k of i
+    sbox_in = expansion ^ ki;
 
+    cout << "XOR: " << bitset<48>(sbox_in) << endl;
+
+    // start sbox substitution
+    for(int i=0;i < 8;i++) {
+
+        // isolate bits
+        iso_bits = sbox_in & shifter ;
+
+        // get row #
+        if((iso_bits & 0x0000840000000000) == 0x0000840000000000) row = 3;
+        else if((iso_bits & 0x0000800000000000) == 0x0000800000000000) row = 2;
+        else if((iso_bits & 0x0000040000000000) == 0x0000040000000000) row = 1;
+        else row = 0;
+
+        // get column #
+        col = (int)((iso_bits & 0x0000780000000000) >> 43);
+
+        sbox_out += (ull)(sbox[i][row][col]);
+
+        sbox_in = sbox_in << 6;
+
+        if(i == 7) break;
+
+        sbox_out = sbox_out << 4;
+    }
+
+    // function block output that feeds into IP inverted
+    //f_out = permutation(sbox_out) ^ *li;
+
+    cout << "First s-sub: " << bitset<32>(sbox_out) << endl;
+    exit(1);
 }
 
 // Expands the 32 bit input bit rearragning the bits into a 48 bit output
@@ -236,7 +271,7 @@ ull Des::expand(ull *ri_) {
     }
 
     cout << "Expansion: " << bitset<48>(exp) << endl;
-    exit(1);
+    //exit(1);
     return exp;
 }
 
@@ -365,11 +400,10 @@ void Des::generate_keys() {
 
     cout << "Creating keys...." << endl;
     for(int j=0;j<16;j++){
-        //ci_di = 0;
+
         ci_di = ((unsigned long long)c[j+1] << 28) | (unsigned long long)d[j+1];
-        //cout << bitset<64>((unsigned long long)c[j+1] << 28) << endl;
         cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
-        //assert(ci_di, j+1);
+
         keys[j] = permutation2(ci_di);
         cout << "k" << j+1 << ": " << bitset<48>(keys[j]) << endl;
     }
