@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include <cmath>
+#include <iomanip>
 
 
 using namespace std;
@@ -32,10 +33,12 @@ class Des {
     private:
         static ull key, pc1;
         static string file_string;
+        static ull test_message;
         static int pc1_key[];
         static int pc2_key[];
         static int ip_key[];
         static int e_key[];
+        static int p_key[];
         static uint32_t c[17], d[17];
         static ull keys[16];
         static int sbox[8][4][16];

@@ -2,7 +2,8 @@
 
 
 // member variable declarations
-ull Des::key = 0x133457799BBCDFF1;
+ull Des::key = 0x3b3898371520f75e; //0x133457799BBCDFF1;
+ull Des::test_message = 0x0123456789abcdef;
 ull Des::pc1 = 0;
 string Des::file_string = "";
 uint32_t Des::c[17] = {};
@@ -55,6 +56,18 @@ int Des::e_key[48] = {
       20, 21, 22, 23, 24, 25,
       24, 25, 26, 27, 28, 29,
       28, 29, 30, 31, 32, 1
+};
+
+// Permutation key in function block
+int Des::p_key[32] = {
+      16, 7, 20, 21,
+      29, 12, 28, 17,
+      1, 15, 23, 26,
+      5, 18, 31, 10,
+      2, 8, 24, 14,
+      32, 27, 3, 9,
+      19, 13, 30, 6,
+      22, 11, 4, 25
 };
 
 // S-Box declarations
@@ -139,11 +152,25 @@ void Des::run(string s) {
         ull *li_ = &l0_;
         ull *ri_ = &r0_;
 
-        cout << "L0: " << bitset<32>(l0_) << endl;
-        cout << "R0: " << bitset<32>(r0_) << endl;
+        cout << "L0: " << hex << (l0_) << endl;
+        cout << "R0: " << setfill('0') << setw(8) << hex << (r0_) << endl;
 
-        for(int j=0;j<16;j++)
+        for(int j=0;j<16;j++) {
+
             function_block(li_, ri_, keys[j]);
+            if(j==15){
+                break;
+            }
+
+            //switch the lsb and msb
+            ull temp;
+            temp = l0_;
+            l0_ = r0_;
+            r0_ = temp;
+        }
+
+        //cout << "L16: " << bitset<32>(l0_) << endl;
+        //cout << "R16: " << bitset<32>(r0_) << endl;
 
     } else {
         fatal("File does not exists...exiting program.");
@@ -163,14 +190,14 @@ void Des::read_store_file(string f) {
     stream.seekg(0, stream.beg);
 
     char * buf = new char[length];
-    cout << "Reading file contents...." << endl;
+    //cout << "Reading file contents...." << endl;
     stream.read(buf, length);
 
     stream.close();
 
     file_string = buf;
-    cout << file_string << endl;
-    cout << "File is " << length << " bytes." << endl;
+    //cout << file_string << endl;
+    //cout << "File is " << length << " bytes." << endl;
     delete[] buf;
 }
 
@@ -205,7 +232,7 @@ void Des::function_block(ull *li, ull *ri, ull ki) {
     // XOR function using the expansion output and k of i
     sbox_in = expansion ^ ki;
 
-    cout << "XOR: " << bitset<48>(sbox_in) << endl;
+    //cout << "XOR: " << bitset<48>(sbox_in) << endl;
 
     // start sbox substitution
     for(int i=0;i < 8;i++) {
@@ -231,11 +258,9 @@ void Des::function_block(ull *li, ull *ri, ull ki) {
         sbox_out = sbox_out << 4;
     }
 
-    // function block output that feeds into IP inverted
-    //f_out = permutation(sbox_out) ^ *li;
-
-    cout << "First s-sub: " << bitset<32>(sbox_out) << endl;
-    exit(1);
+    *li = permutation(sbox_out) ^ *li;
+    //cout << "S-sub: " << bitset<32>(sbox_out) << endl;
+    //exit(1);
 }
 
 // Expands the 32 bit input bit rearragning the bits into a 48 bit output
@@ -253,25 +278,9 @@ ull Des::expand(ull *ri_) {
 
         if(i==47) exp += ((*ri_ & temp) >> abs(e_key[i]-(i+1)+16));
         else exp += ((*ri_ & temp) << abs(e_key[i]-(i+1)+16));
-        //cout << "r0:\t" << bitset<48>(r0) << endl;
-        //cout << "temp:\t" << bitset<48>(temp) << endl;
-        //cout << "exp:\t" << bitset<48>(exp) << endl;
-        //cout << endl;
-
-        /*
-        ifdef(i < 16) {
-            exp += ((r0 & temp) << abs(e_key[i]-(i+1) + 16));
-        } else {
-            exp += (r0 & temp) << abs(e_key[i]-(i+1) + 16);
-            cout << "OK" << endl;
-        }
-        */
-
-        //cout << bitset<48>(exp) << endl;
     }
 
-    cout << "Expansion: " << bitset<48>(exp) << endl;
-    //exit(1);
+    //cout << "Expansion: " << bitset<48>(exp) << endl;
     return exp;
 }
 
@@ -280,9 +289,9 @@ ull Des::expand(ull *ri_) {
 // Output: 64 bits
 ull Des::initial_permutation() {
 
-    cout << "Initial permutation..." << endl;
+    //cout << "Initial permutation..." << endl;
 
-    ull block = 0x0123456789abcdef;
+    ull block = test_message;
     ull ip = 0;
     ull temp;
     int shft_amt, off_set;
@@ -299,15 +308,39 @@ ull Des::initial_permutation() {
             ip += (block & temp);
     }
 
-    cout << "64 bit (8 byte block) initial permutation: " << bitset<64>(ip) << endl;
+    //cout << "64 bit (8 byte block) initial permutation: " << bitset<64>(ip) << endl;
 
     return ip;
+}
+
+// Function permutation
+ull Des::permutation(ull p32) {
+
+    ull temp;
+    int shift, off_set;
+    ull p = 0;
+
+    for(int i=0;i<32;i++) {
+        temp = 1;
+        shift = 32-p_key[i];
+        temp = temp << shift;
+        off_set = abs((i+1) -p_key[i]);
+        if((i+1) - p_key[i] > 0)
+            p += (p32 & temp) >> off_set;
+        else if((i+1) - p_key[i] < 0)
+            p += (p32 & temp) << off_set;
+        else
+            p += (p32 & temp);
+    }
+
+    //cout << "Last permutation: " << bitset<32>(p) << endl;
+    return p;
 }
 
 // Permutation 1
 void Des::permutation1() {
 
-    cout << "Performing first permutation..." << endl;
+    //cout << "Performing first permutation..." << endl;
 
     ull temp;
     int shft_amt, off_set;
@@ -322,7 +355,7 @@ void Des::permutation1() {
             pc1 += (key & temp) << off_set;
     }
     pc1 = pc1 >> 8;
-    cout << "First Permutation Choice: " << bitset<64>(pc1) << endl;
+    //cout << "First Permutation Choice: " << bitset<64>(pc1) << endl;
 }
 
 // Permutation 2
@@ -371,9 +404,9 @@ void Des::blocks_creation() {
     c[0] = (uint32_t)((0x00fffffff0000000 & pc1) >> 28);
     d[0] = (uint32_t)(0x000000000fffffff & pc1);
 
-    cout << "c0: " << bitset<28>(c[0]) << endl;
-    cout << "d0: " << bitset<28>(d[0]) << endl;
-    cout << endl;
+    //cout << "c0: " << bitset<28>(c[0]) << endl;
+    //cout << "d0: " << bitset<28>(d[0]) << endl;
+    //cout << endl;
 
     for(int i=1;i<=16;i++) {
         if(i==1 || i==2 || i==9 || i==16){
@@ -384,9 +417,9 @@ void Des::blocks_creation() {
             d[i] = rotl(d[i-1], 2);
         }
 
-        cout << "c" << i << ": " << bitset<28>(c[i]) << endl;
-        cout << "d" << i << ": " << bitset<28>(d[i]) << endl;
-        cout << endl;
+        //cout << "c" << i << ": " << bitset<28>(c[i]) << endl;
+        //cout << "d" << i << ": " << bitset<28>(d[i]) << endl;
+        //cout << endl;
     }
 }
 
@@ -398,11 +431,11 @@ void Des::generate_keys() {
 
     blocks_creation();
 
-    cout << "Creating keys...." << endl;
+    //cout << "Creating keys...." << endl;
     for(int j=0;j<16;j++){
 
-        ci_di = ((unsigned long long)c[j+1] << 28) | (unsigned long long)d[j+1];
-        cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
+        ci_di = ((ull)c[j+1] << 28) | (ull)d[j+1];
+        //cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
 
         keys[j] = permutation2(ci_di);
         cout << "k" << j+1 << ": " << bitset<48>(keys[j]) << endl;
