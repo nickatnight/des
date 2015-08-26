@@ -15,25 +15,25 @@ typedef unsigned long long ull;
 class Des {
 
     public:
-        void run(string s = "");
-        static void read_store_file(string);
-        static bool check_if_file_exists(string);
-        static ull permutation(ull);
-        static void permutation1();
-        static ull permutation2(ull);
-        static void generate_keys();
-        static void fatal(string);
-        static void blocks_creation();
-        static uint32_t rotl(uint32_t, int32_t);
-        static ull initial_permutation();
-        static void test_function();
-        static void function_block(ull *, ull *, ull);
-        static ull expand(ull *);
+        Des(string);
+        void run();
+        void read_store_file(string);
+        bool check_if_file_exists(string);
+        ull permutation(ull);
+        void permutation1();
+        ull permutation2(ull);
+        void generate_keys();
+        void fatal(string);
+        void blocks_creation();
+        uint32_t rotl(uint32_t, int32_t);
+        ull initial_permutation();
+        void test_function();
+        void function_block(ull *, ull *, ull);
+        ull expand(ull *);
 
     private:
-        static ull key, pc1;
-        static string file_string;
-        static ull test_message;
+        ull key, pc1, test_message;
+        string file_string, file_name;
         static int pc1_key[];
         static int pc2_key[];
         static int ip_key[];
@@ -44,3 +44,4 @@ class Des {
         static int sbox[8][4][16];
 
 };
+

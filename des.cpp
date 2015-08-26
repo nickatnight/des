@@ -1,17 +1,22 @@
 #include "des.h"
 
 
-// member variable declarations
-ull Des::key = 0x3b3898371520f75e; //0x133457799BBCDFF1;
-ull Des::test_message = 0x0123456789abcdef;
-ull Des::pc1 = 0;
-string Des::file_string = "";
-uint32_t Des::c[17] = {};
-uint32_t Des::d[17] = {};
-ull Des::keys[16] = {};
+// static member variable definition
+ull Des::keys[16] = {0};
+uint32_t Des::c[17] ={0};
+uint32_t Des::d[17] = {0};
+
+// Default constructor
+Des::Des(string s) {
+    file_name = s;
+    key = 0x3b3898371520f75e;
+    test_message = 0x0123456789abcdef;
+    file_string = "";
+    pc1 = 0;
+};
 
 // Permutation Choice 1 key
-int Des::pc1_key[] = {
+int Des::pc1_key[56] = {
       57, 49, 41, 33, 25, 17, 9,
       1, 58, 50, 42, 34, 26, 18,
       10, 2, 59, 51, 43, 35, 27,
@@ -123,17 +128,21 @@ int Des::sbox[8][4][16] = {
 };
 
 // Main function to execute the encryption
-void Des::run(string s) {
+void Des::run() {
 
     string block_;
     ull ip_out, l0_, r0_, ki_;
 
-    //cout << bitset<64>(key) << endl;
-    if(check_if_file_exists(s)) {
-        read_store_file(s);
+    if(check_if_file_exists(file_name)) {
+
+        read_store_file(file_name);
+
+        cout << "Message : " << bitset<64>(test_message) << endl;
+        cout << "Key: " << bitset<64>(key) << endl;
+
         generate_keys();
 
-        // for loop for ip, then inner fo loop for function blocki
+        // for loop for ip, then inner for loop for function block
         // for(int i=0;i<(file_string/8);i++) {
         //    block = file_string.substr((i*8)+1,8);
         //    ip_out = initial_permutation(block_);
@@ -145,6 +154,8 @@ void Des::run(string s) {
         //        function_block(l0_, r0_, keys[j])
         //    }
         // }
+
+
         ip_out = initial_permutation();
         l0_ = (ip_out & 0xffffffff00000000) >> 32;
         r0_ = (ip_out & 0x00000000ffffffff);
@@ -152,11 +163,12 @@ void Des::run(string s) {
         ull *li_ = &l0_;
         ull *ri_ = &r0_;
 
-        cout << "L0: " << hex << (l0_) << endl;
-        cout << "R0: " << setfill('0') << setw(8) << hex << (r0_) << endl;
+        cout << "L0: " << bitset<32>(l0_) << endl;
+        cout << "R0: " << bitset<32>(r0_) << endl;
 
         for(int j=0;j<16;j++) {
 
+            cout << "Round " << j+1 << ":" << endl;
             function_block(li_, ri_, keys[j]);
             if(j==15){
                 break;
@@ -404,9 +416,9 @@ void Des::blocks_creation() {
     c[0] = (uint32_t)((0x00fffffff0000000 & pc1) >> 28);
     d[0] = (uint32_t)(0x000000000fffffff & pc1);
 
-    //cout << "c0: " << bitset<28>(c[0]) << endl;
-    //cout << "d0: " << bitset<28>(d[0]) << endl;
-    //cout << endl;
+    cout << "c0: " << bitset<28>(c[0]) << endl;
+    cout << "d0: " << bitset<28>(d[0]) << endl;
+    cout << endl;
 
     for(int i=1;i<=16;i++) {
         if(i==1 || i==2 || i==9 || i==16){
@@ -417,9 +429,9 @@ void Des::blocks_creation() {
             d[i] = rotl(d[i-1], 2);
         }
 
-        //cout << "c" << i << ": " << bitset<28>(c[i]) << endl;
-        //cout << "d" << i << ": " << bitset<28>(d[i]) << endl;
-        //cout << endl;
+        cout << "c" << i << ": " << bitset<28>(c[i]) << endl;
+        cout << "d" << i << ": " << bitset<28>(d[i]) << endl;
+        cout << endl;
     }
 }
 
@@ -435,8 +447,9 @@ void Des::generate_keys() {
     for(int j=0;j<16;j++){
 
         ci_di = ((ull)c[j+1] << 28) | (ull)d[j+1];
-        //cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
+        cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
 
+        // CHECK ******************************************
         keys[j] = permutation2(ci_di);
         cout << "k" << j+1 << ": " << bitset<48>(keys[j]) << endl;
     }
