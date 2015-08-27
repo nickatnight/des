@@ -7,7 +7,7 @@ uint32_t Des::c[17] ={0};
 uint32_t Des::d[17] = {0};
 
 // Default constructor
-Des::Des(string s) {
+Des::Des(const string &s) {
     file_name = s;
     key = 0x3b3898371520f75e;
     test_message = 0x0123456789abcdef;
@@ -170,9 +170,8 @@ void Des::run() {
 
             cout << "Round " << j+1 << ":" << endl;
             function_block(li_, ri_, keys[j]);
-            if(j==15){
-                break;
-            }
+
+            if(j==15) break;
 
             //switch the lsb and msb
             ull temp;
@@ -189,11 +188,11 @@ void Des::run() {
     }
 }
 
-// Reads the input file as a string as a binary read and stores the data in a
-// string (so each byte can be read individually).
+// Reads the input file as a string using a binary read and stores the data in a
+// string (so each byte can be analyzed individually).
 //
 // Input: name of the file
-void Des::read_store_file(string f) {
+void Des::read_store_file(const string &f) {
 
     ifstream stream(f, ifstream::binary);
 
@@ -218,7 +217,7 @@ void Des::read_store_file(string f) {
 //
 // Input: file name
 // Output: bool
-bool Des::check_if_file_exists(string s) {
+bool Des::check_if_file_exists(const string &s) {
 
     if(FILE *f = fopen(s.c_str(), "r")){
         fclose(f);
@@ -475,7 +474,7 @@ uint32_t Des::rotl(uint32_t v, int32_t shift) {
 // Prompts user of error and exits program
 //
 // Input: Name of error
-void Des::fatal(string s) {
+void Des::fatal(const string &s) {
     cout << s << endl;
     exit(1);
 }

@@ -1,12 +1,12 @@
+#ifndef DES_H
+#define DES_H
+
 #include <iostream>
 #include <stdio.h>
 #include <ctime>
 #include <bitset>
-#include <vector>
 #include <string>
 #include <fstream>
-#include <cmath>
-#include <iomanip>
 
 
 using namespace std;
@@ -15,15 +15,15 @@ typedef unsigned long long ull;
 class Des {
 
     public:
-        Des(string);
+        Des(const string&);
         void run();
-        void read_store_file(string);
-        bool check_if_file_exists(string);
+        void read_store_file(const string&);
+        bool check_if_file_exists(const string&);
         ull permutation(ull);
         void permutation1();
         ull permutation2(ull);
         void generate_keys();
-        void fatal(string);
+        void fatal(const string&);
         void blocks_creation();
         uint32_t rotl(uint32_t, int32_t);
         ull initial_permutation();
@@ -44,4 +44,5 @@ class Des {
         static int sbox[8][4][16];
 
 };
+#endif
 
