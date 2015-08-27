@@ -44,5 +44,6 @@ class Des {
         static int sbox[8][4][16];
 
 };
+
 #endif
 
