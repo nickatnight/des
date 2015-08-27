@@ -18,7 +18,7 @@ int main(int argc, char **argv){
         cout << "Execution time: " << dur << endl;
     }
     else {
-        cout << "Invalid input." << endl;
+        cout << "Invalid input. Refer to README." << endl;
     }
 
     return 0;
