@@ -7,7 +7,6 @@ int main(int argc, char **argv){
     // check to make sure a file is included
     if(argc == 2) {
 
-        Test::get_file();
         Des *d = new Des(argv[1]);
         clock_t start;
         double dur;

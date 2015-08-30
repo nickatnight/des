@@ -13,7 +13,6 @@ void Test::get_file() {
 
     ull value;
     string num, string_value, k_s = "KS", cd = "CD";
-    size_t found;
 
     // counters
     int i=0, cdc = 0, kc = 0;
@@ -25,8 +24,8 @@ void Test::get_file() {
 
         // save each value in the corresponding array
         switch(i) {
-            case 0: keybit = value; break;
-            case 1: inputbit = value; break;
+            case 0: inputbit = value; break;
+            case 1: keybit = value; break;
             default:
                 if(num.find(cd) != string::npos) cidi[cdc++] = value;
                 else ks[kc++] = value;
@@ -35,10 +34,4 @@ void Test::get_file() {
         i++;
     }
 
-    for(int c=0;c<17;c++) {
-        cout << "CD" << c << ": " << cidi[c] << endl;
-        if(c == 16) break;
-        cout << "KS" << c+1 << ": " << ks[c] << endl;
-    }
-    exit(1);
 }

@@ -1,4 +1,5 @@
 #include "des.h"
+#include "test.h"
 
 
 // static member variable definition
@@ -133,12 +134,22 @@ void Des::run() {
     string block_;
     ull ip_out, l0_, r0_, ki_;
 
+    Test::get_file();
+
+    // double check to make sure the file exists before performing any
+    // operations on the file
     if(check_if_file_exists(file_name)) {
 
+        // perform a binary scan on the file and store the contents in an array
+        // for easy access
         read_store_file(file_name);
 
+
         cout << "Message : " << bitset<64>(test_message) << endl;
+        assert(test_message == Test::inputbit);
+
         cout << "Key: " << bitset<64>(key) << endl;
+        assert(key == Test::keybit);
 
         generate_keys();
 
@@ -160,12 +171,15 @@ void Des::run() {
         l0_ = (ip_out & 0xffffffff00000000) >> 32;
         r0_ = (ip_out & 0x00000000ffffffff);
 
+        // pointers to the address locations of left and right branches of the
+        // initial permutation
         ull *li_ = &l0_;
         ull *ri_ = &r0_;
 
         cout << "L0: " << bitset<32>(l0_) << endl;
         cout << "R0: " << bitset<32>(r0_) << endl;
 
+        // do sixteen rounds of function block computations
         for(int j=0;j<16;j++) {
 
             cout << "Round " << j+1 << ":" << endl;
@@ -419,6 +433,9 @@ void Des::blocks_creation() {
     cout << "d0: " << bitset<28>(d[0]) << endl;
     cout << endl;
 
+    // c[0]d[0] TEST
+    assert((((ull)c[0] << 28) | (ull)d[0]) == Test::cidi[0]);
+
     for(int i=1;i<=16;i++) {
         if(i==1 || i==2 || i==9 || i==16){
             c[i] = rotl(c[i-1], 1);
@@ -448,8 +465,13 @@ void Des::generate_keys() {
         ci_di = ((ull)c[j+1] << 28) | (ull)d[j+1];
         cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
 
+        // CiDi TEST
+        assert(ci_di == Test::cidi[j+1]);
+
         // CHECK ******************************************
         keys[j] = permutation2(ci_di);
+        assert(keys[j] == Test::ks[j]);
+
         cout << "k" << j+1 << ": " << bitset<48>(keys[j]) << endl;
     }
 }

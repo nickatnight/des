@@ -7,7 +7,7 @@
 #include <bitset>
 #include <string>
 #include <fstream>
-
+#include <cassert>
 
 using namespace std;
 typedef unsigned long long ull;

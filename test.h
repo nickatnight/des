@@ -16,12 +16,9 @@ typedef unsigned long long ull;
 class Test {
 
     public:
-        Test();
         static void get_file();
-
-    private:
-        static ull keybit;
         static ull inputbit;
+        static ull keybit;
         static ull cidi[17];
         static ull ks[16];
 };
