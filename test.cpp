@@ -4,6 +4,7 @@ ull Test::cidi[17] = {0};
 ull Test::ks[16] = {0};
 ull Test::keybit = 0;
 ull Test::inputbit = 0;
+ull Test::l_r = 0;
 
 
 // get the file contents to test each value
@@ -26,6 +27,7 @@ void Test::get_file() {
         switch(i) {
             case 0: inputbit = value; break;
             case 1: keybit = value; break;
+            case 35: l_r = value; break;
             default:
                 if(num.find(cd) != string::npos) cidi[cdc++] = value;
                 else ks[kc++] = value;

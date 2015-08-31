@@ -194,8 +194,13 @@ void Des::run() {
             r0_ = temp;
         }
 
-        //cout << "L16: " << bitset<32>(l0_) << endl;
-        //cout << "R16: " << bitset<32>(r0_) << endl;
+        cout << "L16: " << bitset<32>(l0_) << endl;
+        cout << "R16: " << bitset<32>(r0_) << endl;
+
+        ull lr = (l0_ << 32) + r0_;
+
+        cout << "LR: " << bitset<64>(lr) << endl;
+        assert(lr == Test::l_r);
 
     } else {
         fatal("File does not exists...exiting program.");
@@ -392,14 +397,14 @@ ull Des::permutation2(ull cidi) {
     // CiDi = 56 bits
     // keys = 48 bits
     //              1   2     3   4     5   6     7   8     9   10    11  12    13  14
-    // 0000 0000 _ 1110 0001 1001 1001 0101 0101 1111 1010 1010 1100 1100 1111 0001 1110
-    // 0000 0000 _ 0000 0000 xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx
+    // 0000 0000 _ 1000 1001 1000 0000 1101 0111 1010 1001 0011 1011 0001 0000 1111 1111
+    // 0000 0000 _ 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
     temp_keys = ((cidi & 0x0000040000000000) << 5) + ((cidi & 0x0000008000000000) << 7)\
                 + ((cidi & 0x0000200000000000) << 0) + ((cidi & 0x0000000100000000) << 12)\
                 + ((cidi & 0x0080000000000000) >> 12) + ((cidi & 0x0008000000000000) >> 9)\
                 + ((cidi & 0x0020000000000000) >> 12) + ((cidi & 0x0000000010000000) << 12)\
                 + ((cidi & 0x0000020000000000) >> 2) + ((cidi & 0x0004000000000000) >> 12)\
-                + ((cidi & 0x0000008000000000) >> 2) + ((cidi & 0x0000400000000000) >> 10)\
+                + ((cidi & 0x0000000800000000) << 2) + ((cidi & 0x0000400000000000) >> 10)\
                 + ((cidi & 0x0000000200000000) << 2) + ((cidi & 0x0000002000000000) >> 3)\
                 + ((cidi & 0x0000100000000000) >> 11) + ((cidi & 0x0010000000000000) >> 20)\
                 + ((cidi & 0x0000000040000000) << 1) + ((cidi & 0x0001000000000000) >> 18)\
@@ -420,6 +425,7 @@ ull Des::permutation2(ull cidi) {
                 + ((cidi & 0x0000000008000000) >> 26) + ((cidi & 0x0000000001000000) >> 24);
 
     //cout << "k1: " << bitset<48>(temp_keys) << endl;
+    //exit(1);
     return temp_keys;
 }
 
@@ -468,7 +474,6 @@ void Des::generate_keys() {
         // CiDi TEST
         assert(ci_di == Test::cidi[j+1]);
 
-        // CHECK ******************************************
         keys[j] = permutation2(ci_di);
         assert(keys[j] == Test::ks[j]);
 
