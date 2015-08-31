@@ -1,26 +1,30 @@
 #include "des.cpp"
 #include "test.cpp"
 
+#define E_FLAG "-e"
+#define D_FLAG "-d"
+
 
 int main(int argc, char **argv){
 
-    // check to make sure a file is included
-    if(argc == 2) {
+    clock_t start;
+    double dur;
 
-        Des *d = new Des(argv[1]);
-        clock_t start;
-        double dur;
+    start = clock();
+    Des *d = new Des(argv[2]);
 
-        start = clock();
-        d->run();
+    // check for proper input
+    if(argc == 3) {
 
-        // get duration of the time it took program to run and output to user
-        dur = (clock() - start) / (double) CLOCKS_PER_SEC;
-        cout << "Execution time: " << dur << endl;
+        if(!strcmp(argv[1], E_FLAG)) d->encrypt();
+        else if(!strcmp(argv[1], D_FLAG)) d->decrypt();
+        else cout << "Invalid input. Refere to README." << endl;
     }
     else {
         cout << "Invalid input. Refer to README." << endl;
     }
 
+    dur = (clock() - start) / (double) CLOCKS_PER_SEC;
+    cout << "Execution time: " << dur << endl;
     return 0;
 }

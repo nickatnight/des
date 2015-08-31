@@ -141,7 +141,7 @@ int Des::sbox[8][4][16] = {
 };
 
 // Main function to execute the encryption
-void Des::run() {
+void Des::encrypt() {
 
     string block_;
     ull ip_out, l0_, r0_, ki_;
@@ -196,6 +196,8 @@ void Des::run() {
 
             function_block(li_, ri_, keys[j]);
 
+            // leave the last round of msb and lsb unswtiched since we need to
+            // switch them again in the final permutaiton of the key
             if(j==15) break;
 
             //switch the lsb and msb
@@ -221,6 +223,9 @@ void Des::run() {
     }
 }
 
+void Des::decrypt() {
+
+}
 // Reads the input file as a string using a binary read and stores the data in a
 // string (so each byte can be analyzed individually).
 //
