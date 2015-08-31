@@ -22,5 +22,6 @@ class Test {
         static ull cidi[17];
         static ull ks[16];
         static ull l_r;
+        static ull final_output;
 };
 #endif

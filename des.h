@@ -22,6 +22,7 @@ class Des {
         ull permutation(ull);
         void permutation1();
         ull permutation2(ull);
+        ull inverse_permutation(ull);
         void generate_keys();
         void fatal(const string&);
         void blocks_creation();
@@ -39,6 +40,7 @@ class Des {
         static int ip_key[];
         static int e_key[];
         static int p_key[];
+        static int ip_inverse[];
         static uint32_t c[17], d[17];
         static ull keys[16];
         static int sbox[8][4][16];

@@ -76,6 +76,18 @@ int Des::p_key[32] = {
       22, 11, 4, 25
 };
 
+// Inverse permutation key for the final permutation of the cipher block
+int Des::ip_inverse[64] = {
+      40, 8, 48, 16, 56, 24, 64, 32,
+      39, 7, 47, 15, 55, 23, 63, 31,
+      38, 6, 46, 14, 54, 22, 62, 30,
+      37, 5, 45, 13, 53, 21, 61, 29,
+      36, 4, 44, 12, 52, 20, 60, 28,
+      35, 3, 43, 11, 51, 19, 59, 27,
+      34, 2, 42, 10, 50, 18, 58, 26,
+      33, 1, 41, 9, 49, 17, 57, 25
+};
+
 // S-Box declarations
 int Des::sbox[8][4][16] = {
     {
@@ -182,7 +194,6 @@ void Des::run() {
         // do sixteen rounds of function block computations
         for(int j=0;j<16;j++) {
 
-            cout << "Round " << j+1 << ":" << endl;
             function_block(li_, ri_, keys[j]);
 
             if(j==15) break;
@@ -199,8 +210,11 @@ void Des::run() {
 
         ull lr = (l0_ << 32) + r0_;
 
-        cout << "LR: " << bitset<64>(lr) << endl;
+        // TEST L16R16
         assert(lr == Test::l_r);
+
+        ull fo = inverse_permutation(lr);
+        cout << "Final permutation: " << hex << fo << endl;
 
     } else {
         fatal("File does not exists...exiting program.");
@@ -262,8 +276,6 @@ void Des::function_block(ull *li, ull *ri, ull ki) {
     // XOR function using the expansion output and k of i
     sbox_in = expansion ^ ki;
 
-    //cout << "XOR: " << bitset<48>(sbox_in) << endl;
-
     // start sbox substitution
     for(int i=0;i < 8;i++) {
 
@@ -289,8 +301,6 @@ void Des::function_block(ull *li, ull *ri, ull ki) {
     }
 
     *li = permutation(sbox_out) ^ *li;
-    //cout << "S-sub: " << bitset<32>(sbox_out) << endl;
-    //exit(1);
 }
 
 // Expands the 32 bit input bit rearragning the bits into a 48 bit output
@@ -310,7 +320,6 @@ ull Des::expand(ull *ri_) {
         else exp += ((*ri_ & temp) << abs(e_key[i]-(i+1)+16));
     }
 
-    //cout << "Expansion: " << bitset<48>(exp) << endl;
     return exp;
 }
 
@@ -338,8 +347,6 @@ ull Des::initial_permutation() {
             ip += (block & temp);
     }
 
-    //cout << "64 bit (8 byte block) initial permutation: " << bitset<64>(ip) << endl;
-
     return ip;
 }
 
@@ -363,14 +370,11 @@ ull Des::permutation(ull p32) {
             p += (p32 & temp);
     }
 
-    //cout << "Last permutation: " << bitset<32>(p) << endl;
     return p;
 }
 
 // Permutation 1
 void Des::permutation1() {
-
-    //cout << "Performing first permutation..." << endl;
 
     ull temp;
     int shft_amt, off_set;
@@ -424,17 +428,38 @@ ull Des::permutation2(ull cidi) {
                 + ((cidi & 0x0000000000000040) >> 3) + ((cidi & 0x0000000000100000) >> 18)\
                 + ((cidi & 0x0000000008000000) >> 26) + ((cidi & 0x0000000001000000) >> 24);
 
-    //cout << "k1: " << bitset<48>(temp_keys) << endl;
-    //exit(1);
     return temp_keys;
 }
 
+ull Des::inverse_permutation(ull lr_) {
+
+    ull block = lr_;
+    ull ip = 0;
+    ull temp;
+    int shft_amt, off_set;
+    for(int i=0;i<64;i++ ) {
+        temp = 1;
+        shft_amt = 64 - ip_inverse[i];
+        temp = temp << shft_amt;
+        off_set = abs((i+1)-ip_inverse[i]);
+        if(((i+1)-ip_inverse[i]) > 0)
+            ip += (block & temp) >> off_set;
+        else if(((i+1)-ip_inverse[i]) < 0)
+            ip += (block & temp) << off_set;
+        else
+            ip += (block & temp);
+    }
+
+    assert(ip == Test::final_output);
+    return ip;
+}
 // Creates 17 c/d blocks in order to get our permuted k keys
 void Des::blocks_creation() {
 
     c[0] = (uint32_t)((0x00fffffff0000000 & pc1) >> 28);
     d[0] = (uint32_t)(0x000000000fffffff & pc1);
 
+    cout << endl;
     cout << "c0: " << bitset<28>(c[0]) << endl;
     cout << "d0: " << bitset<28>(d[0]) << endl;
     cout << endl;
