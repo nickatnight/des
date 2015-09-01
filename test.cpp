@@ -14,7 +14,7 @@ void Test::get_file() {
     ifstream infile("test.txt");
 
     ull value;
-    string num, string_value, k_s = "KS", cd = "CD";
+    string num, string_value, cd = "CD";
 
     // counters
     int i=0, cdc = 0, kc = 0;

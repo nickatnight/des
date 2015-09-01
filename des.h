@@ -15,8 +15,7 @@ class Des {
 
     public:
         Des(const string&);
-        void encrypt();
-        void decrypt();
+        void run(char);
         void read_store_file(const string&);
         void generate_keys();
         void fatal(const string&);
@@ -29,14 +28,14 @@ class Des {
         bool check_if_file_exists(const string&);
 
     private:
-        ull key, pc1, test_message;
+        ull key, pc1, test_message, decrypt_message;
         string file_string, file_name;
         static int pc1_key[];
         static int pc2_key[];
         static int ip_key[];
         static int e_key[];
         static int p_key[];
-        static int ip_inverse[];
+        static int ip_inverse_key[];
         static uint32_t c[17], d[17];
         static ull keys[16];
         static int sbox[8][4][16];

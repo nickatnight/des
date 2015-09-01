@@ -16,8 +16,8 @@ int main(int argc, char **argv){
     // check for proper input
     if(argc == 3) {
 
-        if(!strcmp(argv[1], E_FLAG)) d->encrypt();
-        else if(!strcmp(argv[1], D_FLAG)) d->decrypt();
+        if(!strcmp(argv[1], E_FLAG)) d->run('e');
+        else if(!strcmp(argv[1], D_FLAG)) d->run('d');
         else cout << "Invalid input. Refere to README." << endl;
     }
     else {

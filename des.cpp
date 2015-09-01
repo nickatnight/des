@@ -11,7 +11,8 @@ uint32_t Des::d[17] = {0};
 Des::Des(const string &s) {
     file_name = s;
     key = 0x3b3898371520f75e;
-    test_message = 0x0123456789abcdef;
+    test_message = 0x1234567890abcdef;//0x0123456789abcdef;
+    decrypt_message = 0xc154868a1cbfc641;
     file_string = "";
     pc1 = 0;
 };
@@ -77,7 +78,7 @@ int Des::p_key[32] = {
 };
 
 // Inverse permutation key for the final permutation of the cipher block
-int Des::ip_inverse[64] = {
+int Des::ip_inverse_key[64] = {
       40, 8, 48, 16, 56, 24, 64, 32,
       39, 7, 47, 15, 55, 23, 63, 31,
       38, 6, 46, 14, 54, 22, 62, 30,
@@ -140,13 +141,9 @@ int Des::sbox[8][4][16] = {
     }
 };
 
-// Main function to execute the encryption
-void Des::encrypt() {
+void Des::run(char e_or_d) {
 
-    string block_;
-    ull ip_out, l0_, r0_, ki_;
-
-    Test::get_file();
+    ull ip_out, l0_, r0_, ki_, block;
 
     // double check to make sure the file exists before performing any
     // operations on the file
@@ -156,12 +153,12 @@ void Des::encrypt() {
         // for easy access
         read_store_file(file_name);
 
+        if(e_or_d == 'e') block = test_message;
+        else block = decrypt_message;
 
-        cout << "Message : " << bitset<64>(test_message) << endl;
-        assert(test_message == Test::inputbit);
+        cout << "Block : " << bitset<64>(block) << endl;
 
         cout << "Key: " << bitset<64>(key) << endl;
-        assert(key == Test::keybit);
 
         generate_keys();
 
@@ -179,7 +176,7 @@ void Des::encrypt() {
         // }
 
         // ********* Initial Permutation ***********
-        ip_out = permute(64, 64, ip_key, test_message);
+        ip_out = permute(64, 64, ip_key, block);
 
         l0_ = (ip_out & 0xffffffff00000000) >> 32;
         r0_ = (ip_out & 0x00000000ffffffff);
@@ -195,7 +192,8 @@ void Des::encrypt() {
         // do sixteen rounds of function block computations
         for(int j=0;j<16;j++) {
 
-            function_block(li_, ri_, keys[j]);
+            if(e_or_d == 'e') function_block(li_, ri_, keys[j]);
+            else function_block(li_, ri_, keys[15-j]);
 
             // leave the last round of msb and lsb unswtiched since we need to
             // switch them again in the final permutaiton of the key
@@ -214,21 +212,17 @@ void Des::encrypt() {
         ull lr = (l0_ << 32) + r0_;
 
         // TEST L16R16
-        assert(lr == Test::l_r);
+        //assert(lr == Test::l_r);
 
         // ****** Inverse Permutation *********
-        ull fo = permute(64, 64, ip_inverse, lr);
-        assert(fo == Test::final_output);
+        ull inverse_perm = permute(64, 64, ip_inverse_key, lr);
+        //assert(fo == Test::final_output);
 
-        cout << "Final permutation: " << hex << fo << endl;
+        cout << "Final permutation: " << hex << inverse_perm << endl;
 
     } else {
         fatal("File does not exists...exiting program.");
     }
-}
-
-void Des::decrypt() {
-
 }
 
 // Reads the input file as a string using a binary read and stores the data in a
@@ -377,7 +371,7 @@ void Des::blocks_creation() {
     cout << endl;
 
     // TEST c[0]d[0]
-    assert((((ull)c[0] << 28) | (ull)d[0]) == Test::cidi[0]);
+    //assert((((ull)c[0] << 28) | (ull)d[0]) == Test::cidi[0]);
 
     for(int i=1;i<=16;i++) {
         // check if the ci di value to determine how many left shifts need to be
@@ -415,11 +409,11 @@ void Des::generate_keys() {
         cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
 
         // TEST C sub i and D sub i
-        assert(ci_di == Test::cidi[j+1]);
+        //assert(ci_di == Test::cidi[j+1]);
 
         //********* Permutation 2 ***********
         keys[j] = permute(56, 48, pc2_key, ci_di) >> 8;
-        assert(keys[j] == Test::ks[j]);
+        //assert(keys[j] == Test::ks[j]);
 
         cout << "k" << j+1 << ": " << bitset<48>(keys[j]) << endl;
     }
