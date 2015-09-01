@@ -178,8 +178,9 @@ void Des::encrypt() {
         //    }
         // }
 
+        // ********* Initial Permutation ***********
+        ip_out = permute(64, 64, ip_key, test_message);
 
-        ip_out = initial_permutation();
         l0_ = (ip_out & 0xffffffff00000000) >> 32;
         r0_ = (ip_out & 0x00000000ffffffff);
 
@@ -215,7 +216,10 @@ void Des::encrypt() {
         // TEST L16R16
         assert(lr == Test::l_r);
 
-        ull fo = inverse_permutation(lr);
+        // ****** Inverse Permutation *********
+        ull fo = permute(64, 64, ip_inverse, lr);
+        assert(fo == Test::final_output);
+
         cout << "Final permutation: " << hex << fo << endl;
 
     } else {
@@ -226,6 +230,7 @@ void Des::encrypt() {
 void Des::decrypt() {
 
 }
+
 // Reads the input file as a string using a binary read and stores the data in a
 // string (so each byte can be analyzed individually).
 //
@@ -239,14 +244,13 @@ void Des::read_store_file(const string &f) {
     stream.seekg(0, stream.beg);
 
     char * buf = new char[length];
-    //cout << "Reading file contents...." << endl;
+
     stream.read(buf, length);
 
     stream.close();
 
     file_string = buf;
-    //cout << file_string << endl;
-    //cout << "File is " << length << " bytes." << endl;
+
     delete[] buf;
 }
 
@@ -272,13 +276,15 @@ bool Des::check_if_file_exists(const string &s) {
 //        Key value for n
 void Des::function_block(ull *li, ull *ri, ull ki) {
 
-    ull expansion = 0, sbox_in = 0, sbox_out = 0, f_out;
-    expansion = expand(ri);
+    ull expansion = 0, sbox_in = 0, sbox_out = 0, shifter=0x0000fc0000000000, f_out, iso_bits;
     int row, col;
 
-    ull iso_bits, shifter=0x0000fc0000000000;
+    // expand the lsb
+    expansion = expand(ri);
 
-    // XOR function using the expansion output and k of i
+    // XOR function using the expansion output and k of i that assigns a 48 bit
+    // value to sbox_in. Each 6 bit group is used as input to get the column and
+    // row that determines the output.
     sbox_in = expansion ^ ki;
 
     // start sbox substitution
@@ -296,16 +302,23 @@ void Des::function_block(ull *li, ull *ri, ull ki) {
         // get column #
         col = (int)((iso_bits & 0x0000780000000000) >> 43);
 
+        // Cast the 32 bit integer from the static array to 64 bits and add the
+        // total to the s_box output
         sbox_out += (ull)(sbox[i][row][col]);
 
-        sbox_in = sbox_in << 6;
+        // shift out previous bits from sbox to get the new isloated bits
+        sbox_in <<= 6;
 
+        // break out of loop so we do not have an extra shift in the final sbox
+        // output
         if(i == 7) break;
 
-        sbox_out = sbox_out << 4;
+        // shift out 4 bits to add the newest 4
+        sbox_out <<= 4;
     }
 
-    *li = permutation(sbox_out) ^ *li;
+    //************ Permutation *************
+    *li = permute(32, 32, p_key, sbox_out) ^ *li;
 }
 
 // Expands the 32 bit input bit rearragning the bits into a 48 bit output
@@ -319,7 +332,7 @@ ull Des::expand(ull *ri_) {
 
     for(int i=0;i<48;i++) {
         temp = 1;
-        temp = temp << (32-e_key[i]);
+        temp <<= (32-e_key[i]);
 
         if(i==47) exp += ((*ri_ & temp) >> abs(e_key[i]-(i+1)+16));
         else exp += ((*ri_ & temp) << abs(e_key[i]-(i+1)+16));
@@ -328,139 +341,33 @@ ull Des::expand(ull *ri_) {
     return exp;
 }
 
-// Initial permutation rearranges a block of 64 bits from a defined key
-//
-// Output: 64 bits
-ull Des::initial_permutation() {
+ull Des::permute(int in_bits, int out_bits, int *key_, ull input_) {
 
-    //cout << "Initial permutation..." << endl;
-
-    ull block = test_message;
-    ull ip = 0;
-    ull temp;
+    //ull block = test_message;
+    ull temp, return_perm = 0;
     int shft_amt, off_set;
-    for(int i=0;i<64;i++ ) {
+
+    for(int i=0;i<out_bits;i++ ) {
         temp = 1;
-        shft_amt = 64 - ip_key[i];
-        temp = temp << shft_amt;
-        off_set = abs((i+1)-ip_key[i]);
-        if(((i+1)-ip_key[i]) > 0)
-            ip += (block & temp) >> off_set;
-        else if(((i+1)-ip_key[i]) < 0)
-            ip += (block & temp) << off_set;
+        shft_amt = in_bits - key_[i];
+        temp <<= shft_amt;
+        off_set = abs((i+1)-key_[i]);
+        if(((i+1)-key_[i]) > 0)
+            return_perm += (input_ & temp) >> off_set;
+        else if(((i+1)-key_[i]) < 0)
+            return_perm += (input_ & temp) << off_set;
         else
-            ip += (block & temp);
+            return_perm += (input_ & temp);
     }
 
-    return ip;
+    return return_perm;
 }
 
-// Function permutation
-ull Des::permutation(ull p32) {
 
-    ull temp;
-    int shift, off_set;
-    ull p = 0;
-
-    for(int i=0;i<32;i++) {
-        temp = 1;
-        shift = 32-p_key[i];
-        temp = temp << shift;
-        off_set = abs((i+1) -p_key[i]);
-        if((i+1) - p_key[i] > 0)
-            p += (p32 & temp) >> off_set;
-        else if((i+1) - p_key[i] < 0)
-            p += (p32 & temp) << off_set;
-        else
-            p += (p32 & temp);
-    }
-
-    return p;
-}
-
-// Permutation 1
-void Des::permutation1() {
-
-    ull temp;
-    int shft_amt, off_set;
-    for(int i=0;i<56;i++ ) {
-        temp = 1;
-        shft_amt = 64 - pc1_key[i];
-        temp = temp << shft_amt;
-        off_set = abs((i+1)-pc1_key[i]);
-        if(((i+1)-pc1_key[i]) > 0)
-            pc1 += (key & temp) >> off_set;
-        else if(((i+1)-pc1_key[i]) < 0)
-            pc1 += (key & temp) << off_set;
-    }
-    pc1 = pc1 >> 8;
-    //cout << "First Permutation Choice: " << bitset<64>(pc1) << endl;
-}
-
-// Permutation 2
-ull Des::permutation2(ull cidi) {
-
-    ull temp, temp_keys = 0;
-    int shft_amt, off_set;
-
-    // CiDi = 56 bits
-    // keys = 48 bits
-    //              1   2     3   4     5   6     7   8     9   10    11  12    13  14
-    // 0000 0000 _ 1000 1001 1000 0000 1101 0111 1010 1001 0011 1011 0001 0000 1111 1111
-    // 0000 0000 _ 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
-    temp_keys = ((cidi & 0x0000040000000000) << 5) + ((cidi & 0x0000008000000000) << 7)\
-                + ((cidi & 0x0000200000000000) << 0) + ((cidi & 0x0000000100000000) << 12)\
-                + ((cidi & 0x0080000000000000) >> 12) + ((cidi & 0x0008000000000000) >> 9)\
-                + ((cidi & 0x0020000000000000) >> 12) + ((cidi & 0x0000000010000000) << 12)\
-                + ((cidi & 0x0000020000000000) >> 2) + ((cidi & 0x0004000000000000) >> 12)\
-                + ((cidi & 0x0000000800000000) << 2) + ((cidi & 0x0000400000000000) >> 10)\
-                + ((cidi & 0x0000000200000000) << 2) + ((cidi & 0x0000002000000000) >> 3)\
-                + ((cidi & 0x0000100000000000) >> 11) + ((cidi & 0x0010000000000000) >> 20)\
-                + ((cidi & 0x0000000040000000) << 1) + ((cidi & 0x0001000000000000) >> 18)\
-                + ((cidi & 0x0000010000000000) >> 11) + ((cidi & 0x0002000000000000) >> 21)\
-                + ((cidi & 0x0000000020000000) >> 2) + ((cidi & 0x0000001000000000) >> 10)\
-                + ((cidi & 0x0000080000000000) >> 18) + ((cidi & 0x0040000000000000) >> 30)\
-                + ((cidi & 0x0000000000008000) << 8) + ((cidi & 0x0000000000000010) << 18)\
-                + ((cidi & 0x0000000002000000) >> 4) + ((cidi & 0x0000000000080000) << 1)\
-                + ((cidi & 0x0000000000000200) << 10) + ((cidi & 0x0000000000000002) << 17)\
-                + ((cidi & 0x0000000004000000) >> 9) + ((cidi & 0x0000000000010000) >> 0)\
-                + ((cidi & 0x0000000000000020) << 10) + ((cidi & 0x0000000000000800) << 3)\
-                + ((cidi & 0x0000000000800000) >> 10) + ((cidi & 0x0000000000000100) << 4)\
-                + ((cidi & 0x0000000000001000) >> 1) + ((cidi & 0x0000000000000080) << 3)\
-                + ((cidi & 0x0000000000020000) >> 8) + ((cidi & 0x0000000000000001) << 8)\
-                + ((cidi & 0x0000000000400000) >> 15) + ((cidi & 0x0000000000000008) << 3)\
-                + ((cidi & 0x0000000000000400) >> 5) + ((cidi & 0x0000000000004000) >> 10)\
-                + ((cidi & 0x0000000000000040) >> 3) + ((cidi & 0x0000000000100000) >> 18)\
-                + ((cidi & 0x0000000008000000) >> 26) + ((cidi & 0x0000000001000000) >> 24);
-
-    return temp_keys;
-}
-
-ull Des::inverse_permutation(ull lr_) {
-
-    ull block = lr_;
-    ull ip = 0;
-    ull temp;
-    int shft_amt, off_set;
-    for(int i=0;i<64;i++ ) {
-        temp = 1;
-        shft_amt = 64 - ip_inverse[i];
-        temp = temp << shft_amt;
-        off_set = abs((i+1)-ip_inverse[i]);
-        if(((i+1)-ip_inverse[i]) > 0)
-            ip += (block & temp) >> off_set;
-        else if(((i+1)-ip_inverse[i]) < 0)
-            ip += (block & temp) << off_set;
-        else
-            ip += (block & temp);
-    }
-
-    assert(ip == Test::final_output);
-    return ip;
-}
 // Creates 17 c/d blocks in order to get our permuted k keys
 void Des::blocks_creation() {
 
+    // isolate the msb and lsb to get C0 and D0
     c[0] = (uint32_t)((0x00fffffff0000000 & pc1) >> 28);
     d[0] = (uint32_t)(0x000000000fffffff & pc1);
 
@@ -469,10 +376,12 @@ void Des::blocks_creation() {
     cout << "d0: " << bitset<28>(d[0]) << endl;
     cout << endl;
 
-    // c[0]d[0] TEST
+    // TEST c[0]d[0]
     assert((((ull)c[0] << 28) | (ull)d[0]) == Test::cidi[0]);
 
     for(int i=1;i<=16;i++) {
+        // check if the ci di value to determine how many left shifts need to be
+        // performed
         if(i==1 || i==2 || i==9 || i==16){
             c[i] = rotl(c[i-1], 1);
             d[i] = rotl(d[i-1], 1);
@@ -491,20 +400,25 @@ void Des::blocks_creation() {
 void Des::generate_keys() {
 
     ull ci_di = 0;
-    permutation1();
+
+    // ******** Permutation 1 ************
+    pc1 = permute(64, 56, pc1_key, key) >> 8;
 
     blocks_creation();
 
-    //cout << "Creating keys...." << endl;
     for(int j=0;j<16;j++){
 
+        // format C[i] with D[i] to get 56 bit requierd output. start at j+1
+        // since we start with C[1]D[1] for the first key. Cast C and D to 64
+        // bit long.
         ci_di = ((ull)c[j+1] << 28) | (ull)d[j+1];
         cout << "CnDn(" << j+1 << "): " << bitset<56>(ci_di) << endl;
 
-        // CiDi TEST
+        // TEST C sub i and D sub i
         assert(ci_di == Test::cidi[j+1]);
 
-        keys[j] = permutation2(ci_di);
+        //********* Permutation 2 ***********
+        keys[j] = permute(56, 48, pc2_key, ci_di) >> 8;
         assert(keys[j] == Test::ks[j]);
 
         cout << "k" << j+1 << ": " << bitset<48>(keys[j]) << endl;

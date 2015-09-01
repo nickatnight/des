@@ -18,19 +18,15 @@ class Des {
         void encrypt();
         void decrypt();
         void read_store_file(const string&);
-        bool check_if_file_exists(const string&);
-        ull permutation(ull);
-        void permutation1();
-        ull permutation2(ull);
-        ull inverse_permutation(ull);
         void generate_keys();
         void fatal(const string&);
         void blocks_creation();
-        uint32_t rotl(uint32_t, int32_t);
-        ull initial_permutation();
         void test_function();
-        void function_block(ull *, ull *, ull);
-        ull expand(ull *);
+        void function_block(ull*, ull*, ull);
+        ull expand(ull*);
+        ull permute(int, int, int*, ull);
+        uint32_t rotl(uint32_t, int32_t);
+        bool check_if_file_exists(const string&);
 
     private:
         ull key, pc1, test_message;
