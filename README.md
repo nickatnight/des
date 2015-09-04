@@ -7,8 +7,8 @@ masks. This was written for fun during the tail end of summer 15'.
 64 bit ciphertext. This will eventually become a practical program to encrypt any file.
 
 To run:
-    make
-    ./des -e main.cpp
-    ./des -d main.cpp
+    make <br />
+    ./des -e main.cpp <br />
+    ./des -d main.cpp <br />
 
 -__ -;
