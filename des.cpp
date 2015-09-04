@@ -141,6 +141,7 @@ int Des::sbox[8][4][16] = {
     }
 };
 
+// Driver function
 void Des::run(char e_or_d) {
 
     ull ip_out, l0_, r0_, ki_, block;
@@ -335,6 +336,8 @@ ull Des::expand(ull *ri_) {
     return exp;
 }
 
+// Permute function that handles all permutations. Parameters determine which
+// permutation to perform.
 ull Des::permute(int in_bits, int out_bits, int *key_, ull input_) {
 
     //ull block = test_message;

@@ -1,5 +1,5 @@
-#include "des.cpp"
-#include "test.cpp"
+#include "des.h"
+#include "test.h"
 
 #define E_FLAG "-e"
 #define D_FLAG "-d"
