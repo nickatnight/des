@@ -1,6 +1,6 @@
 #
 # Makefile for a des program.  This program uses both the des module
-# and a test module. Typing 'make' or 'make count' will create the
+# and a test module. Typing 'make' or 'make des' will create the
 # executable file.
 #
 
